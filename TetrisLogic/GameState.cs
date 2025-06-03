@@ -32,7 +32,7 @@ namespace TetrisLogic
         public bool GameOver { get; private set; }
         public int Score { get; private set; }
         public Block HeldBlock { get; private set; }
-        public bool CanHold { get; private set; }
+        public bool CanHold { get; set; }
 
         // Add settings property
         public GameSettings Settings
