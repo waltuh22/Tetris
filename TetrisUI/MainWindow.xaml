@@ -49,6 +49,10 @@
                             Padding="10"
                             Margin="10,10"
                             Click="Ranking_Click" />
+                    <Button Content="Ustawienia"
+                            Padding="10"
+                            Margin="10,10"
+                            Click="Settings_Click" />
                     <Button Content="Wyjdz"
                             Padding="10"
                             Margin="10,10"
@@ -78,8 +82,7 @@
                         Background="#101010"
                         Width="250"
                         Height="510"
-                        ClipToBounds="True"
-                        Loaded="GameCanvas_Loaded" />
+                        ClipToBounds="True"/>
             </Viewbox>
 
             <TextBlock x:Name="ScoreText"
@@ -131,28 +134,6 @@
                        Margin="20"
                        Width="125" />
             </StackPanel>
-
-            <Grid x:Name="GameOverMenu"
-                  Background="#CC000000"
-                  Grid.RowSpan="2"
-                  Grid.ColumnSpan="3"
-                  Visibility="Hidden">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="GameOver"
-                               FontSize="48"
-                               TextAlignment="Center" />
-                    <TextBlock x:Name="FinalScoreText1"
-                               Text="Score: "
-                               FontSize="36"
-                               TextAlignment="Center" />
-                    <Button Content="Play Again"
-                            Background="LightGreen"
-                            Margin="0,20,0,0"
-                            Padding="5"
-                            Click="PlayAgain_Click" />
-                </StackPanel>
-            </Grid>
         </Grid>
         
         
@@ -222,5 +203,123 @@
                         Margin="20,10,20,0" />
             </StackPanel>
         </Grid>
+
+        <!-- Settings Screen -->
+        <Grid x:Name="SettingsScreen"
+              Visibility="Hidden">
+            <Border BorderThickness="0.75"
+                    BorderBrush="Black"
+                    CornerRadius="20"
+                    Background="#22000000"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MaxWidth="600">
+                <StackPanel Margin="20">
+                    <TextBlock Text="Ustawienia"
+                               FontSize="48"
+                               TextAlignment="Center"
+                               Margin="0,0,0,30">
+                        <TextBlock.Effect>
+                            <DropShadowEffect Color="Black"
+                                              BlurRadius="5"
+                                              ShadowDepth="3"
+                                              Opacity="0.7" />
+                        </TextBlock.Effect>
+                    </TextBlock>
+
+                    <!-- Points Multiplier -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,10">
+                        <TextBlock Text="Mnoznik punktow:"
+                                   Width="250"
+                                   VerticalAlignment="Center" />
+                        <Slider x:Name="PointsMultiplierSlider"
+                                Minimum="1"
+                                Maximum="10"
+                                Width="200"
+                                TickFrequency="1"
+                                IsSnapToTickEnabled="True"
+                                Value="1"
+                                ValueChanged="PointsMultiplier_ValueChanged" />
+                        <TextBlock x:Name="PointsMultiplierValue"
+                                   Text="1x"
+                                   Width="50"
+                                   TextAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0" />
+                    </StackPanel>
+
+                    <!-- Holding Block -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,10">
+                        <TextBlock Text="Dostepnosc trzymania bloku:"
+                                   Width="350"
+                                   VerticalAlignment="Center" />
+                        <CheckBox x:Name="HoldingBlockEnabledCheckbox"
+                                  IsChecked="True"
+                                  Checked="HoldingBlockEnabled_Changed"
+                                  Unchecked="HoldingBlockEnabled_Changed" />
+                    </StackPanel>
+
+                    <!-- Drop Block -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,10">
+                        <TextBlock Text="Dostepnosc upuszczania bloku:"
+                                   Width="360"
+                                   VerticalAlignment="Center" />
+                        <CheckBox x:Name="DropBlockEnabledCheckbox"
+                                  IsChecked="True"
+                                  Checked="DropBlockEnabled_Changed"
+                                  Unchecked="DropBlockEnabled_Changed" />
+                    </StackPanel>
+
+                    <!-- Ghost Block -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,10">
+                        <TextBlock Text="Widocznosc bloku-ducha:"
+                                   Width="310"
+                                   VerticalAlignment="Center" />
+                        <CheckBox x:Name="GhostBlockVisibleCheckbox"
+                                  IsChecked="True"
+                                  Checked="GhostBlockVisible_Changed"
+                                  Unchecked="GhostBlockVisible_Changed" />
+                    </StackPanel>
+
+                    <!-- Invert Controls -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,10">
+                        <TextBlock Text="Odwrocone sterowanie obrotu:"
+                                   Width="350"
+                                   VerticalAlignment="Center" />
+                        <CheckBox x:Name="InvertControlsCheckbox"
+                                  IsChecked="False"
+                                  Checked="InvertControls_Changed"
+                                  Unchecked="InvertControls_Changed" />
+                    </StackPanel>
+
+                    <!-- Buttons -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0,30,0,0">
+                        <Button Content="Zapisz"
+                                Width="120"
+                                Margin="10"
+                                Padding="10"
+                                Click="SaveSettings_Click" />
+                        <Button Content="Reset"
+                                Width="120"
+                                Margin="10"
+                                Padding="10"
+                                Click="ResetSettings_Click" />
+                        <Button Content="Powrot"
+                                Width="120"
+                                Margin="10"
+                                Padding="10"
+                                Click="BackToMenu_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
     </Grid>
 </Window>

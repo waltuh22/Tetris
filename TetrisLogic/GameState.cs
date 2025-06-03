@@ -1,10 +1,12 @@
-﻿using TetrisModel;
+﻿// Modify GameState.cs to incorporate the settings
+using TetrisModel;
 
 namespace TetrisLogic
 {
     public class GameState
     {
         private Block currentBlock;
+        private GameSettings _settings;
 
         public Block CurrentBlock
         {
@@ -24,22 +26,26 @@ namespace TetrisLogic
                 }
             }
         }
+
         public GameGrid GameGrid { get; private set; } // 22 rows, 10 columns
-
         public BlockQueue BlockQueue { get; private set; }
-
         public bool GameOver { get; private set; }
-
         public int Score { get; private set; }
-
         public Block HeldBlock { get; private set; }
-
         public bool CanHold { get; private set; }
+
+        // Add settings property
+        public GameSettings Settings
+        {
+            get => _settings;
+            set => _settings = value ?? new GameSettings();
+        }
 
         public GameState()
         {
             GameGrid = new GameGrid(22, 10);
             BlockQueue = new BlockQueue();
+            _settings = GameSettings.LoadFromFile();
             CurrentBlock = BlockQueue.GetAndUpdate();
             CanHold = true;
         }
@@ -59,7 +65,8 @@ namespace TetrisLogic
 
         public void HoldBlock()
         {
-            if (!CanHold)
+            // Check if holding is enabled in settings
+            if (!CanHold || !_settings.HoldingBlockEnabled)
             {
                 return;
             }
@@ -121,7 +128,23 @@ namespace TetrisLogic
 
         public bool IsGameOver()
         {
-            return !(GameGrid.IsRowEmpty(0) && GameGrid.IsRowEmpty(1)); // jeżeli 1 z dwóch pierwszych ukrytych rzędów jest nie pusty (co najmniej jedno pole jest zajęte: 1 z 20 pól "tiles") to wtedy następuje koniec gry: zwrócenie true (warunek ten jest zapisany po przekształceniu go prawem De Morgana)
+            return !(GameGrid.IsRowEmpty(0) && GameGrid.IsRowEmpty(1));
+        }
+
+        private int CalculateScore(int linesCleared)
+        {
+            int baseScore;
+            switch (linesCleared)
+            {
+                case 1: baseScore = 40; break;
+                case 2: baseScore = 100; break;
+                case 3: baseScore = 300; break;
+                case 4: baseScore = 1200; break;
+                default: baseScore = 0; break;
+            }
+
+            // Apply the points multiplier from settings
+            return baseScore * _settings.PointsMultiplier;
         }
 
         private void PlaceBlock()
@@ -131,7 +154,8 @@ namespace TetrisLogic
                 GameGrid[p.Row, p.Column] = CurrentBlock.Id;
             }
 
-            Score += GameGrid.ClearFullRows();
+            int linesCleared = GameGrid.ClearFullRows();
+            Score += CalculateScore(linesCleared);
 
             if (IsGameOver())
             {
@@ -181,6 +205,12 @@ namespace TetrisLogic
 
         public void DropBlock()
         {
+            // Check if dropping is enabled in settings
+            if (!_settings.DropBlockEnabled)
+            {
+                return;
+            }
+
             CurrentBlock.Move(BlockDropDistance(), 0);
             PlaceBlock();
         }

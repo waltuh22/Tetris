@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿// Modified GameController with ghost block visibility control
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using TetrisLogic;
@@ -17,6 +18,7 @@ namespace TetrisController2
         public int CurrentScore => _gameState.Score;
 
         public event EventHandler GameOver;
+        public event EventHandler<GameSettingsChangedEventArgs> SettingsChanged;
 
         public GameController(IGameView view, ImageSource[] tileImages, ImageSource[] blockImages)
         {
@@ -28,12 +30,15 @@ namespace TetrisController2
             _view.KeyInput += (sender, e) => HandleInput(e.Key);
             _view.PlayAgainRequested += (sender, e) => StartNewGame();
             _view.ViewLoaded += (sender, e) => OnViewLoaded();
+            _view.SaveSettingsRequested += (sender, e) => SaveSettings();
+            _view.ResetSettingsRequested += (sender, e) => ResetSettings();
         }
 
         private void OnViewLoaded()
         {
             _imageControls = SetupGameCanvas();
-            StartNewGame();
+            // Initialize settings in the view
+            _view.UpdateSettings(_gameState.Settings);
         }
 
         private Image[,] SetupGameCanvas()
@@ -57,17 +62,40 @@ namespace TetrisController2
         public void HandleInput(Key key)
         {
             if (_gameState.GameOver) return;
+            // Check if we need to invert the rotate controls
+            bool invertRotation = _gameState.Settings.InvertControls;
 
             switch (key)
             {
-                case Key.Left: _gameState.MoveBlockLeft(); break;
-                case Key.Right: _gameState.MoveBlockRight(); break;
+                case Key.Left:
+                    if (invertRotation)
+                        _gameState.MoveBlockRight();
+                    else
+                        _gameState.MoveBlockLeft();
+                    break;
+                case Key.Right:
+                    if (invertRotation)
+                        _gameState.MoveBlockLeft();
+                    else
+                        _gameState.MoveBlockRight();
+                    break;
                 case Key.Down: _gameState.MoveBlockDown(); break;
-                case Key.Up: _gameState.RotateBlockCW(); break;
-                case Key.Z: _gameState.RotateBlockCCW(); break;
+                case Key.Up:
+                    if (invertRotation)
+                        _gameState.RotateBlockCCW();
+                    else
+                        _gameState.RotateBlockCW();
+                    break;
+                case Key.Z:
+                    if (invertRotation)
+                        _gameState.RotateBlockCW();
+                    else
+                        _gameState.RotateBlockCCW();
+                    break;
                 case Key.C: _gameState.HoldBlock(); break;
                 case Key.Space: _gameState.DropBlock(); break;
-                default: return;
+                default:
+                    return;
             }
             UpdateView();
         }
@@ -97,13 +125,18 @@ namespace TetrisController2
 
         private int CalculateDelay()
         {
-            return Math.Max(75, 1000 - (_gameState.Score * 25));
+            double factor = Math.Log10(_gameState.Score + 10); // +10 to avoid log(0)
+            int delay = (int)(1000 - factor * 150); // slower reduction
+            return Math.Max(150, delay);
         }
 
         private void UpdateView()
         {
             DrawGrid();
-            DrawGhostBlock();
+            if (_gameState.Settings.GhostBlockVisible)
+            {
+                DrawGhostBlock();
+            }
             DrawCurrentBlock();
             DrawNextBlock();
             DrawHeldBlock();
@@ -153,6 +186,38 @@ namespace TetrisController2
                 ? _blockImages[0]
                 : _blockImages[_gameState.HeldBlock.Id]);
         }
+
+        public void UpdateSettings(GameSettings newSettings)
+        {
+            _gameState.Settings = newSettings;
+            // Notify view about settings change
+            SettingsChanged?.Invoke(this, new GameSettingsChangedEventArgs(newSettings));
+            UpdateView();
+        }
+
+        public void SaveSettings()
+        {
+            _gameState.Settings.SaveToFile();
+        }
+
+        public void ResetSettings()
+        {
+            _gameState.Settings.ResetToDefaults();
+            SettingsChanged?.Invoke(this, new GameSettingsChangedEventArgs(_gameState.Settings));
+            _gameState.Settings.SaveToFile();
+            UpdateView();
+        }
+    }
+
+    // Event arguments for settings changes
+    public class GameSettingsChangedEventArgs : EventArgs
+    {
+        public GameSettings Settings { get; }
+
+        public GameSettingsChangedEventArgs(GameSettings settings)
+        {
+            Settings = settings;
+        }
     }
 
     public interface IGameController
@@ -161,6 +226,10 @@ namespace TetrisController2
         void HandleInput(Key key);
         int CurrentScore { get; }
         event EventHandler GameOver;
+        event EventHandler<GameSettingsChangedEventArgs> SettingsChanged;
+        void UpdateSettings(GameSettings settings);
+        void SaveSettings();
+        void ResetSettings();
     }
 
     public interface IGameView
@@ -168,6 +237,8 @@ namespace TetrisController2
         event EventHandler<KeyEventArgs> KeyInput;
         event EventHandler PlayAgainRequested;
         event EventHandler ViewLoaded;
+        event EventHandler SaveSettingsRequested;
+        event EventHandler ResetSettingsRequested;
 
         void AddGameCanvasChild(Image image, int row, int col, int cellSize);
         void UpdateScore(int score);
@@ -175,5 +246,6 @@ namespace TetrisController2
         void UpdateHeldBlockImage(ImageSource image);
         void ShowGameScreen();
         void ShowGameOver(int score);
+        void UpdateSettings(GameSettings settings);
     }
 }
